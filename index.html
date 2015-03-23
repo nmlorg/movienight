@@ -9,55 +9,15 @@
 <h3>Add a movie to the list:</h3>
 </div>
 
+<script src="/js/lookup.js"></script>
 <script src="/js/util.js"></script>
 <script>
 var container = document.getElementById('container');
-var suggestionsList = document.createElement('datalist');
 var input = document.createElement('input');
-var movies = {};
-var titles = {};
-
-container.appendChild(suggestionsList);
-suggestionsList.id = 'suggestions';
-
-function display(suggestions) {
-  suggestionsList.textContent = '';
-
-  for (var i = 0; i < suggestions.length; i++) {
-    var suggestion = suggestions[i];
-    var opt = document.createElement('option');
-
-    opt.value = suggestion.Title + ' (' + suggestion.Year + ')';
-    suggestionsList.appendChild(opt);
-    titles[opt.value] = suggestion.imdbID;
-  }
-}
-
-function acresult(k) {
-  return function(data) {
-    var suggestions = movies[k] = data.Search || [];
-
-    if (k == input.value.toLowerCase())
-      display(suggestions);
-  };
-}
+var titles = addLookup(input);
 
 container.appendChild(input);
 input.className = 'form-control';
-input.setAttribute('list', 'suggestions');
-input.addEventListener('input', function(ev) {
-  var k = input.value.toLowerCase().split(' (')[0];
-  var suggestions = movies[k];
-
-  if (suggestions)
-    display(suggestions)
-  else {
-    var scr = document.createElement('script');
-
-    scr.src = 'http://www.omdbapi.com/?s=' + encodeURIComponent(k + '*') + '&callback=' + encodeURIComponent('acresult(' + JSON.stringify(k) + ')');
-    document.body.appendChild(scr);
-  }
-});
 input.addEventListener('change', function(ev) {
   var imdbCode = titles[input.value];
 
