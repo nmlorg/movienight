@@ -150,8 +150,8 @@ function displayEx(data) {
 
 container.appendChild(document.createTextNode('This shows every movie you and your friends have suggested. Rank each movie based on how much you want to see it [again] with your friends (not just how awesome you thought it was).'));
 
-json('/movies', function(movieList) {
-  for (var i = 0; i < movieList.length; i++)
-    json('/movie?imdb_id=' + encodeURIComponent(movieList[i]), displayEx);
+json('/movies', function(data) {
+  for (var i = 0; i < data.all.length; i++)
+    json('/movie?imdb_id=' + encodeURIComponent(data.all[i]), displayEx);
 });
 </script>

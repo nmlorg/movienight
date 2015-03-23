@@ -10,6 +10,7 @@ handlers:
 - url: /
   static_files: index.html
   upload: index.html
+  login: required
 
 - url: /js/
   static_dir: js
