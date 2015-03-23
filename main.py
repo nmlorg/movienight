@@ -67,7 +67,24 @@ class GetMovie(webapp2.RequestHandler):
     json.dump(movie.data, self.response)
 
 
+class GetRankings(webapp2.RequestHandler):
+  def get(self):
+    movies = {}
+    for movie in Movie.query():
+      movies[movie.key.id()] = d = movie.data.copy()
+      d['overall'] = 0
+
+    for user in User.query():
+      for i, imdb_id in enumerate(user.movies):
+        movies[imdb_id]['overall'] += 1. / (i + 1)
+
+    movies = sorted(movies.itervalues(), key=lambda ent: -ent['overall'])
+    self.response.content_type = 'application/json'
+    json.dump(movies, self.response)
+
+
 app = webapp2.WSGIApplication([
     ('/movies', GetMovies),
     ('/movie', GetMovie),
+    ('/rankings', GetRankings),
 ], debug=True)
