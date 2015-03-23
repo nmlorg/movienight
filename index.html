@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+<title>Movie Night</title>
+
+<div class="container" id="container">
+<h1>Movie Night</h1>
+<h3>Add a movie to the list:</h3>
+</div>
+
+<script src="/js/util.js"></script>
+<script>
+var container = document.getElementById('container');
+var suggestionsList = document.createElement('datalist');
+var input = document.createElement('input');
+var movies = {};
+var titles = {};
+
+container.appendChild(suggestionsList);
+suggestionsList.id = 'suggestions';
+
+function display(suggestions) {
+  suggestionsList.textContent = '';
+
+  for (var i = 0; i < suggestions.length; i++) {
+    var suggestion = suggestions[i];
+    var opt = document.createElement('option');
+
+    opt.value = suggestion.Title + ' (' + suggestion.Year + ')';
+    suggestionsList.appendChild(opt);
+    titles[opt.value] = suggestion.imdbID;
+  }
+}
+
+function acresult(k) {
+  return function(data) {
+    var suggestions = movies[k] = data.Search || [];
+
+    if (k == input.value.toLowerCase())
+      display(suggestions);
+  };
+}
+
+container.appendChild(input);
+input.className = 'form-control';
+input.setAttribute('list', 'suggestions');
+input.addEventListener('input', function(ev) {
+  var k = input.value.toLowerCase().split(' (')[0];
+  var suggestions = movies[k];
+
+  if (suggestions)
+    display(suggestions)
+  else {
+    var scr = document.createElement('script');
+
+    scr.src = 'http://www.omdbapi.com/?s=' + encodeURIComponent(k + '*') + '&callback=' + encodeURIComponent('acresult(' + JSON.stringify(k) + ')');
+    document.body.appendChild(scr);
+  }
+});
+input.addEventListener('change', function(ev) {
+  var imdbCode = titles[input.value];
+
+  if (imdbCode) {
+    json('/movie?imdb_id=' + encodeURIComponent(imdbCode), displayEx);
+    input.value = '';
+  }
+});
+
+var h3 = document.createElement('h3');
+
+h3.textContent = 'Rank your movies:';
+container.appendChild(h3);
+
+var moviesTable = document.createElement('table');
+container.appendChild(moviesTable);
+moviesTable.className = 'table';
+var moviesThead = document.createElement('thead');
+moviesTable.appendChild(moviesThead);
+moviesThead.innerHTML = '<tr><th>Movie</th><th>Rating</th><th>Runtime</th><th>Genre</th><th>IMDB rating</th><th>Tomato critics</th><th>Tomato users</th></tr>';
+var moviesTbody = document.createElement('tbody');
+moviesTable.appendChild(moviesTbody);
+
+function displayEx(data) {
+  var movieRow = document.createElement('tr');
+
+  if (moviesTbody.firstChild)
+    moviesTbody.insertBefore(movieRow, moviesTbody.firstChild);
+  else
+    moviesTbody.appendChild(movieRow);
+
+  var movieTitle = document.createElement('td');
+  movieRow.appendChild(movieTitle);
+
+  var movieUp = document.createElement('span');
+  movieTitle.appendChild(movieUp);
+  movieUp.className = 'glyphicon glyphicon-arrow-up';
+  movieUp.style.cursor = 'pointer';
+  movieUp.addEventListener('click', function(ev) {
+    var prev = movieRow.previousElementSibling;
+
+    if (prev) {
+      moviesTbody.removeChild(movieRow);
+      moviesTbody.insertBefore(movieRow, prev);
+    }
+  });
+
+  var movieDown = document.createElement('span');
+  movieTitle.appendChild(movieDown);
+  movieDown.className = 'glyphicon glyphicon-arrow-down';
+  movieDown.style.cursor = 'pointer';
+  movieDown.addEventListener('click', function(ev) {
+    var next = movieRow.nextElementSibling;
+
+    if (next) {
+      moviesTbody.removeChild(movieRow);
+      if (next.nextElementSibling)
+        moviesTbody.insertBefore(movieRow, next.nextElementSibling);
+      else
+        moviesTbody.appendChild(movieRow);
+    }
+  });
+
+  var movieLink = document.createElement('a');
+  movieTitle.appendChild(movieLink);
+  movieLink.href = 'http://www.imdb.com/title/' + data.imdbID + '/';
+  movieLink.textContent = data.Title + ' (' + data.Year + ')';
+
+  var td = document.createElement('td');
+  movieRow.appendChild(td);
+  td.textContent = data.Rated;
+  var td = document.createElement('td');
+  movieRow.appendChild(td);
+  td.textContent = data.Runtime;
+  var td = document.createElement('td');
+  movieRow.appendChild(td);
+  td.textContent = data.Genre;
+  var td = document.createElement('td');
+  movieRow.appendChild(td);
+  td.textContent = data.imdbRating;
+  var td = document.createElement('td');
+  movieRow.appendChild(td);
+  if (data.tomatoMeter != 'N/A')
+    td.textContent = data.tomatoMeter + '%';
+  var td = document.createElement('td');
+  movieRow.appendChild(td);
+  if (data.tomatoUserMeter != 'N/A')
+    td.textContent = data.tomatoUserMeter + '%';
+}
+
+container.appendChild(document.createTextNode('This shows every movie you and your friends have suggested. Rank each movie based on how much you want to see it [again] with your friends (not just how awesome you thought it was).'));
+
+json('/movies', function(movieList) {
+  for (var i = 0; i < movieList.length; i++)
+    json('/movie?imdb_id=' + encodeURIComponent(movieList[i]), displayEx);
+});
+</script>
