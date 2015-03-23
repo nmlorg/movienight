@@ -43,6 +43,21 @@ class GetMovies(webapp2.RequestHandler):
     self.response.content_type = 'application/json'
     json.dump({'all': movies, 'ranked': user.movies}, self.response)
 
+  def put(self):
+    current_user = users.get_current_user()
+    if not current_user:
+      return self.redirect(users.create_login_url())
+
+    user = User.get_by_id(current_user.email().lower())
+    if not user:
+      user = User(key=ndb.Key(User, current_user.email().lower()))
+
+    user.movies = json.loads(self.request.get('movies'))
+    user.put()
+
+    self.response.content_type = 'application/json'
+    json.dump(user.movies, self.response)
+
 
 class GetMovie(webapp2.RequestHandler):
   def get(self):

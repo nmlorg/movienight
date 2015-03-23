@@ -41,13 +41,22 @@ moviesThead.innerHTML = '<tr><th>Movie</th><th>Rating</th><th>Runtime</th><th>Ge
 var moviesTbody = document.createElement('tbody');
 moviesTable.appendChild(moviesTbody);
 
+var ranked = [];
+
 function displayEx(data) {
   var movieRow = document.createElement('tr');
 
-  if (moviesTbody.firstChild)
-    moviesTbody.insertBefore(movieRow, moviesTbody.firstChild);
-  else
-    moviesTbody.appendChild(movieRow);
+  movieRow.dataset.id = data.imdbID;
+  if (ranked.indexOf(data.imdbID) == -1)
+    ranked.unshift(data.imdbID);
+
+  moviesTbody.appendChild(movieRow);
+  for (var i = 0; i < moviesTbody.children.length - 1; i++)
+    if (ranked.indexOf(data.imdbID) < ranked.indexOf(moviesTbody.children[i].dataset.id)) {
+      moviesTbody.removeChild(movieRow);
+      moviesTbody.insertBefore(movieRow, moviesTbody.children[i]);
+      break;
+    }
 
   var movieTitle = document.createElement('td');
   movieRow.appendChild(movieTitle);
@@ -62,6 +71,14 @@ function displayEx(data) {
     if (prev) {
       moviesTbody.removeChild(movieRow);
       moviesTbody.insertBefore(movieRow, prev);
+    }
+
+    var i = ranked.indexOf(data.imdbID);
+
+    if (i > 0) {
+      ranked[i] = ranked[i - 1];
+      ranked[i - 1] = data.imdbID;
+      put('/movies', {'movies': JSON.stringify(ranked)});
     }
   });
 
@@ -78,6 +95,14 @@ function displayEx(data) {
         moviesTbody.insertBefore(movieRow, next.nextElementSibling);
       else
         moviesTbody.appendChild(movieRow);
+    }
+
+    var i = ranked.indexOf(data.imdbID);
+
+    if (i < ranked.length - 1) {
+      ranked[i] = ranked[i + 1];
+      ranked[i + 1] = data.imdbID;
+      put('/movies', {'movies': JSON.stringify(ranked)});
     }
   });
 
@@ -111,6 +136,8 @@ function displayEx(data) {
 container.appendChild(document.createTextNode('This shows every movie you and your friends have suggested. Rank each movie based on how much you want to see it [again] with your friends (not just how awesome you thought it was).'));
 
 json('/movies', function(data) {
+  ranked = data.ranked;
+
   for (var i = 0; i < data.all.length; i++)
     json('/movie?imdb_id=' + encodeURIComponent(data.all[i]), displayEx);
 });
