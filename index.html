@@ -165,6 +165,7 @@ function updateRankings() {
       a.href = 'http://www.imdb.com/title/' + movie.imdbID + '/';
       a.textContent = movie.Title + ' (' + movie.Year + ')';
       a.target = '_blank';
+      li.title = Math.round(movie.overall) + ' autovotes from ' + movie.voters + ' users';
     }
   });
 }

@@ -72,11 +72,16 @@ class GetRankings(webapp2.RequestHandler):
     movies = {}
     for movie in Movie.query():
       movies[movie.key.id()] = d = movie.data.copy()
-      d['overall'] = 0
+      d['overall'] = d['voters'] = 0
 
     for user in User.query():
       for i, imdb_id in enumerate(user.movies):
         movies[imdb_id]['overall'] += 1. / (i + 1)
+        movies[imdb_id]['voters'] += 1
+
+    min_overall = min(movie['overall'] for movie in movies.itervalues())
+    for movie in movies.itervalues():
+      movie['overall'] /= min_overall
 
     movies = sorted(movies.itervalues(), key=lambda ent: -ent['overall'])
     self.response.content_type = 'application/json'
